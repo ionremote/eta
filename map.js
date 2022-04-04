@@ -135,7 +135,8 @@ function createLocationButtons(jsonLocations, timeToDestinations) {
         newbutton.innerHTML = timeToDestinations[key] + " " + value;
         newbutton.id = "idLocation" + key;
         newbutton.setAttribute('data-long-press-delay', 1000);
-        var destination = UserDestinationsCoord[key].lat + "," + UserDestinationsCoord[key].lng;
+        // MUST USE LET here, local scope only
+        let destination = UserDestinationsCoord[key].lat + "," + UserDestinationsCoord[key].lng;
         newbutton.onclick = function() {
             onClickButton(destination);
         }
