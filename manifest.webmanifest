@@ -2,8 +2,8 @@
     "theme_color": "#E0F0FF",
     "background_color": "#E0F0FF",
     "display": "fullscreen",
-    "scope": "/",
-    "start_url": "/jam",
+    "scope": "/jam/",
+    "start_url": "/jam/",
     "name": "JAM",
     "short_name": "JAM",
     "icons": [
