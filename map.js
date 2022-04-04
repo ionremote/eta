@@ -96,9 +96,10 @@ function markerLocation() {
 }
 
 // ------------------------- START OF SCRIPT -----------------------------
-function onClickButton(gpsCoord) {
+function onClickButton(destination) {
     //var gpsCoord = "1.35110,103.7188";
-    var url = 'https://www.google.com/maps/search/?api=1&query=' + gpsCoord;
+    var url = 'https://www.google.com/maps/dir/?api=1&travelmode=driving&destination=' + destination;
+    console.log(url);
     window.open(url);
 } //onClickButton
 
@@ -134,8 +135,9 @@ function createLocationButtons(jsonLocations, timeToDestinations) {
         newbutton.innerHTML = timeToDestinations[key] + " " + value;
         newbutton.id = "idLocation" + key;
         newbutton.setAttribute('data-long-press-delay', 1000);
+        var destination = UserDestinationsCoord[key].lat + "," + UserDestinationsCoord[key].lng;
         newbutton.onclick = function() {
-            onClickButton(value);
+            onClickButton(destination);
         }
         newbutton.addEventListener('long-press', function(e) {
             // do something
@@ -163,22 +165,22 @@ function onLongPress(itemIndex){
 } // onLongPress
 
 function saveLocalStorageData() {
-    localStorage.setItem("jam.locations", JSON.stringify(SAVED_LOCATIONS));
-    localStorage.setItem("jam.googlemapkey", UserAPIKey);
+    localStorage.setItem("eta.locations", JSON.stringify(SAVED_LOCATIONS));
+    localStorage.setItem("eta.googlemapkey", UserAPIKey);
     console.log("Save KEY " + UserAPIKey);
 }
 
 var dataRead;
 
 function readLocalStorageData() {
-    UserAPIKey = localStorage.getItem("jam.googlemapkey");
+    UserAPIKey = localStorage.getItem("eta.googlemapkey");
     document.getElementById('key').value = UserAPIKey;
     console.log('READ KEY ' + UserAPIKey);
     UserDestinationsLabel = [];
     UserDestinationsCoord = [];
     UserTimeToReach = [];
 
-    SAVED_LOCATIONS = JSON.parse(localStorage.getItem("jam.locations"));
+    SAVED_LOCATIONS = JSON.parse(localStorage.getItem("eta.locations"));
 
     if (SAVED_LOCATIONS!=null){
     var localData = SAVED_LOCATIONS;

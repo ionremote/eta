@@ -2,10 +2,10 @@
     "theme_color": "#E0F0FF",
     "background_color": "#E0F0FF",
     "display": "fullscreen",
-    "scope": "/jam/",
-    "start_url": "/jam/",
-    "name": "JAM",
-    "short_name": "JAM",
+    "scope": "/eta/",
+    "start_url": "/eta/",
+    "name": "eta",
+    "short_name": "eta",
     "icons": [
         {
             "src": "icons/icon-192x192.png",

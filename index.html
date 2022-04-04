@@ -3,18 +3,20 @@
     <head>
     	<meta charset="utf-8">
     	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="manifest" href="/jam/manifest.webmanifest">
-        <link rel="apple-touch-icon" sizes="192x192" href="/jam/icons/icon-192x192.png">
+        <link rel="manifest" href="/eta/manifest.webmanifest">
+        <link rel="apple-touch-icon" sizes="192x192" href="/eta/icons/icon-192x192.png">
         <style type="text/css">
           body {background-color:#E0F0FF;height:95vh;width:98vw;overscroll-behavior: contain;}
           #map{ width:90vw; height: 80vw; }
+          h1 {font-size:26px;color: black;text-align:center;}
           .divHide{display:none;}
           .divShow{display:block;margin:0 auto;}
-          .button{width:90vw;padding:20px;font-size:20px;margin:15px;text-align:left;}
+          .button {width: 90vw;font-size:20px;color: white;text-align:left;border-radius:20px;background:#42A5F6;padding:15px;border:none;margin:15px; display:block;}
         </style>
-        <title>Jam</title>
+        <title>ETA</title>
     </head>
     <body>
+        <h1>ETA</h1>
     	<div class="divHide"> 
     	<button onclick="onClickTest()">Test</button><br><br>
     	<button onclick="saveLocalStorageData()">save</button><br><br>
@@ -41,7 +43,7 @@
         <script>
             if('serviceWorker' in navigator) {
                 navigator.serviceWorker
-                .register('/jam/sw.js',{scope:'/jam/'})
+                .register('/eta/sw.js',{scope:'/eta/'})
                 .then(function() { console.log("Service Worker Registered"); });
             }
         </script>
