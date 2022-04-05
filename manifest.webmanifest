@@ -4,8 +4,8 @@
     "display": "fullscreen",
     "scope": "/eta/",
     "start_url": "/eta/",
-    "name": "eta",
-    "short_name": "eta",
+    "name": "ETA",
+    "short_name": "ETA",
     "icons": [
         {
             "src": "icons/icon-192x192.png",
