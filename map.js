@@ -5,7 +5,8 @@ var map; //Will contain map object.
 var marker = false; ////Has the user plotted their location marker? 
 var UserDestinationsLabel;  // array for location label;
 var UserDestinationsCoord;  // array for lat,lng
-var UserTimeToReach;
+var UserTimeETA;
+var UserTimeREF;
 var UserAPIKey;
 var UserOrigin;
 var NewCoord;
@@ -97,7 +98,6 @@ function markerLocation() {
 
 // ------------------------- START OF SCRIPT -----------------------------
 function onClickButton(destination) {
-    //var gpsCoord = "1.35110,103.7188";
     var url = 'https://www.google.com/maps/dir/?api=1&travelmode=driving&destination=' + destination;
     console.log(url);
     window.open(url);
@@ -106,7 +106,7 @@ function onClickButton(destination) {
 function onClickTest() {
     readLocalStorageData();
     //var timeToDestinations = ['10m', '20m', '30m', '40m'];
-    createLocationButtons(UserDestinationsLabel, UserTimeToReach);
+    createLocationButtons(UserDestinationsLabel, UserTimeETA);
     //getTimeToDestinations(UserOrigin,UserDestinationsCoord);
 }
 
@@ -118,7 +118,7 @@ function onClickSave() {
     saveLocalStorageData();
 }
 
-function createLocationButtons(jsonLocations, timeToDestinations) {
+function createLocationButtons(jsonLocations, timeETA) {
     console.log("createLocationButtons");
     
     const arrLocations = jsonLocations; //JSON.parse(jsonLocations);
@@ -128,17 +128,35 @@ function createLocationButtons(jsonLocations, timeToDestinations) {
     for (const [key, value] of Object.entries(arrLocations)) {
         console.log(key + "=" + value);
         var newbutton = document.createElement('button');
+        var t = "";
         newbutton.className = 'button';
-        if (timeToDestinations[key]===null || timeToDestinations[key]===undefined) {
-            timeToDestinations[key]='';
+        if (timeETA[key]===null || timeETA[key]===undefined) {
+            timeETA[key]='';
+            UserTimeREF = [];
         }
-        newbutton.innerHTML = timeToDestinations[key] + " " + value;
+        else{
+            t = timeETA[key]+"m "
+        }
+        newbutton.innerHTML = '<b>' + t + value + '</b>';
         newbutton.id = "idLocation" + key;
         newbutton.setAttribute('data-long-press-delay', 1000);
-        // MUST USE LET here, local scope only
-        let destination = UserDestinationsCoord[key].lat + "," + UserDestinationsCoord[key].lng;
+        // Set Color of Button Text
+        if (timeETA[key] < UserTimeREF[key]*0.9){
+            newbutton.className += " trafficGood";
+        }
+        else if (timeETA[key] > UserTimeREF[key]*1.1){
+            // Jam
+            newbutton.className += " trafficBad";
+        }
+        else{
+            // Normal
+            newbutton.className += " trafficNormal";
+        }
+        //MUST USE LET for local scope
+        let coord = UserDestinationsCoord[key];
         newbutton.onclick = function() {
-            onClickButton(destination);
+            onClickButton(coord.lat + "," + coord.lng);
+            console.log(coord.lat + "," + coord.lng);
         }
         newbutton.addEventListener('long-press', function(e) {
             // do something
@@ -179,7 +197,7 @@ function readLocalStorageData() {
     console.log('READ KEY ' + UserAPIKey);
     UserDestinationsLabel = [];
     UserDestinationsCoord = [];
-    UserTimeToReach = [];
+    UserTimeETA = [];
 
     SAVED_LOCATIONS = JSON.parse(localStorage.getItem("eta.locations"));
 
@@ -240,15 +258,18 @@ function showButtons(){
 var apiResponse;
 
 function getTimeToDestinations(userOrigin, userDestinations) {
-    UserTimeToReach = [];
+    UserTimeETA = [];
     // initialize services
-    //const geocoder = new google.maps.Geocoder();
     const service = new google.maps.DistanceMatrixService();
     
     // build request
     const request = {
         origins: [userOrigin],
         destinations: userDestinations,
+        drivingOptions: {
+            departureTime: new Date()
+            //trafficModel: 'best_guess'
+        },
         travelMode: google.maps.TravelMode.DRIVING,
         unitSystem: google.maps.UnitSystem.METRIC,
         avoidHighways: false,
@@ -256,7 +277,7 @@ function getTimeToDestinations(userOrigin, userDestinations) {
     };
 
     if (UserAPIKey===null || UserAPIKey===undefined || UserAPIKey.length<10){
-        createLocationButtons(UserDestinationsLabel,UserTimeToReach);
+        createLocationButtons(UserDestinationsLabel,UserTimeETA);
         return;
     }
 
@@ -266,16 +287,18 @@ function getTimeToDestinations(userOrigin, userDestinations) {
         //console.log(Math.ceil(jsonResponse['rows'][0].elements[0].duration.value/60)+'m');
         //console.log(Math.ceil(jsonResponse['rows'][0].elements[1].duration.value/60)+'m');
         const rows = response['rows'][0].elements;
-
+        
         for (var i = 0; i < rows.length; i++) {
             console.log(rows[i].duration.value);
-            var timetaken = Math.ceil(rows[i].duration.value / 60) + 'm';
-            UserTimeToReach.push(timetaken);
+            let timeETA = Math.ceil(rows[i].duration_in_traffic.value / 60);
+            UserTimeETA.push(timeETA);
+            let timeRef = Math.ceil(rows[i].duration.value / 60);
+            UserTimeREF.push(timeRef)
             //Math.ceil(jsonResponse['rows'][0].elements[1].duration.value/60)+'m';
 
             // append to the buttons
         }
-        createLocationButtons(UserDestinationsLabel, UserTimeToReach);
+        createLocationButtons(UserDestinationsLabel, UserTimeETA);
     });
 } // getTimeToDestinations
 
