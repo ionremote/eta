@@ -208,11 +208,12 @@ function saveNewLocation(label, latlng) {
 } // saveNewLocation
 
 function removeLocation(index){
-    delete JSON_Locations[UserLocationsName[index]];
-    saveLocalStorageData();
-    readLocalStorageData();
-    //getTimeToDestinations(UserOrigin,UserLocationsGPS);
-    createButtons(UserLocationsName);
+    if (confirm("Delete " + UserLocationsName[index] + " ?") == true) {
+        delete JSON_Locations[UserLocationsName[index]];
+        saveLocalStorageData();
+        readLocalStorageData();
+        createButtons(UserLocationsName);
+    }
 } // removeLocation
 
 function selectLocation(){
