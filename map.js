@@ -275,7 +275,7 @@ function processDirections(response, status){
     let routes = response.routes;
     let etaText = "";
     for (var i=0; i<routes.length; i++){
-        let roadName = routes[i].summary;
+        let roadName = routes[i].summary.replace(/and/g,"&#10132;");
         let timeRef = routes[i].legs[0].duration.value;
         let timeETA = routes[i].legs[0].duration_in_traffic.value;
         let distance = routes[i].legs[0].distance.text;
@@ -292,8 +292,8 @@ function processDirections(response, status){
         else{ // Normal
             textColor = '<span class="trafficNormal">';
         }
-        etaText += '<div style="margin-left:50px">' + textColor 
-            + distance + " " + timeMinutes + " " + roadName 
+        etaText += '<div style="margin-left:30px">' + textColor 
+            + distance + "&nbsp;&nbsp;&nbsp;<b>" + timeMinutes + "</b>&nbsp;&nbsp;&nbsp;" + roadName
             + '</span></div>';
     }
 
@@ -316,7 +316,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (document.querySelectorAll('#map').length > 0) {
         readLocalStorageData();
         createButtons(UserLocationsName);
-        
+
         var apikey = "";
         if (UserAPIKey!=null && UserAPIKey.length>10){
             var apikey = 'key='+UserAPIKey;
