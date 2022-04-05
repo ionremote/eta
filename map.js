@@ -1,23 +1,45 @@
 //map.js
 
 //Set up some of our variables.
-var map; //Will contain map object.
+var map = ""; //Will contain map object.
 var marker = false; ////Has the user plotted their location marker? 
-var UserDestinationsLabel;  // array for location label;
-var UserDestinationsCoord;  // array for lat,lng
+var UserLocationsName;  // array for location label;
+var UserLocationsGPS;  // array for lat,lng
 var UserTimeETA;
 var UserTimeREF;
 var UserAPIKey;
 var UserOrigin;
-var NewCoord;
-var SAVED_LOCATIONS = "";
+var UserClickGPS;
+var JSON_Locations = "";
 const MAX_BUTTONS = 6;
 
-var myclickevent;
 //Function called to initialize / create the map.
 //This is called when the page has loaded.
 function initMap() {
+    // get current position
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(position) {
+            var pos = {
+                lat: position.coords.latitude,
+                lng: position.coords.longitude
+            };
 
+            UserOrigin =  pos;
+            console.log("Current Location: " + JSON.stringify(UserOrigin));
+            getETA(0);
+            
+        }, function() {
+            console.log("handleLocationError");
+        });
+    } else {
+        // Browser doesn't support Geolocation
+        console.log("handleLocationError");
+    }
+} // initMap
+
+function createMap(){
+    if (map!="") return;
+    
     //The center location of our map.
     var centerOfMap = new google.maps.LatLng(52.357971, -6.516758);
 
@@ -30,33 +52,14 @@ function initMap() {
     //Create the map object.
     map = new google.maps.Map(document.getElementById('map'), options);
 
+    // zoom in to current position
     infoWindow = new google.maps.InfoWindow;
-    // Try HTML5 geolocation.
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(function(position) {
-            var pos = {
-                lat: position.coords.latitude,
-                lng: position.coords.longitude
-            };
+    infoWindow.setPosition(UserOrigin);
+    infoWindow.setContent('You are here.');
+    infoWindow.open(map);
+    map.setCenter(UserOrigin);
 
-            UserOrigin =  pos;
-
-            infoWindow.setPosition(pos);
-            infoWindow.setContent('You are here.');
-            infoWindow.open(map);
-            map.setCenter(pos);
-
-            //document.getElementById('lat').value = position.coords.latitude; //latitude
-            //document.getElementById('lng').value = position.coords.longitude; //longitude
-
-            getTimeToDestinations(UserOrigin,UserDestinationsCoord)
-        }, function() {
-            console.log("handleLocationError");
-        });
-    } else {
-        // Browser doesn't support Geolocation
-        console.log("handleLocationError");
-    }
+    //getTimeToDestinations(UserOrigin,UserLocationsGPS);    // Try HTML5 geolocation.
 
     //Listen for any clicks on the map.
     google.maps.event.addListener(map, 'click', function(event) {
@@ -83,7 +86,7 @@ function initMap() {
         //Get the marker's location.
         markerLocation();
     });
-}
+} // createMap
 
 //This function will get the marker's current location and then add the lat/long
 //values to our textfields so that we can save the location.
@@ -91,9 +94,7 @@ function markerLocation() {
     //Get location.
     var currentLocation = marker.getPosition();
     //Add lat and lng values to a field that we can save.
-    //document.getElementById('lat').value = currentLocation.lat(); //latitude
-    //document.getElementById('lng').value = currentLocation.lng(); //longitude
-    NewCoord = currentLocation.lat()+","+currentLocation.lng();
+    UserClickGPS = currentLocation.lat()+","+currentLocation.lng();
 }
 
 // ------------------------- START OF SCRIPT -----------------------------
@@ -103,23 +104,16 @@ function onClickButton(destination) {
     window.open(url);
 } //onClickButton
 
-function onClickTest() {
-    readLocalStorageData();
-    //var timeToDestinations = ['10m', '20m', '30m', '40m'];
-    createLocationButtons(UserDestinationsLabel, UserTimeETA);
-    //getTimeToDestinations(UserOrigin,UserDestinationsCoord);
-}
-
 function onClickSave() {
     //var newLocation = document.getElementById("lat").value + "," + document.getElementById("lng").value;
     //console.log("New Location: " + newLocation);
     UserAPIKey = document.getElementById("key").value;
-    saveNewLocation(document.getElementById('label').value, NewCoord);
+    saveNewLocation(document.getElementById('label').value, UserClickGPS);
     saveLocalStorageData();
-}
+} //onClickSave
 
-function createLocationButtons(jsonLocations, timeETA) {
-    console.log("createLocationButtons");
+function createButtons(jsonLocations) {
+    console.log("createButtons");
     
     const arrLocations = jsonLocations; //JSON.parse(jsonLocations);
     var buttonContainer = document.getElementById('divButtons');
@@ -128,32 +122,12 @@ function createLocationButtons(jsonLocations, timeETA) {
     for (const [key, value] of Object.entries(arrLocations)) {
         console.log(key + "=" + value);
         var newbutton = document.createElement('button');
-        var t = "";
         newbutton.className = 'button';
-        if (timeETA[key]===null || timeETA[key]===undefined) {
-            timeETA[key]='';
-            UserTimeREF = [];
-        }
-        else{
-            t = timeETA[key]+"m "
-        }
-        newbutton.innerHTML = '<b>' + t + value + '</b>';
+        newbutton.innerHTML = '<b>' + value + '</b>';
         newbutton.id = "idLocation" + key;
         newbutton.setAttribute('data-long-press-delay', 1000);
-        // Set Color of Button Text
-        if (timeETA[key] < UserTimeREF[key]*0.9){
-            newbutton.className += " trafficGood";
-        }
-        else if (timeETA[key] > UserTimeREF[key]*1.1){
-            // Jam
-            newbutton.className += " trafficBad";
-        }
-        else{
-            // Normal
-            newbutton.className += " trafficNormal";
-        }
         //MUST USE LET for local scope
-        let coord = UserDestinationsCoord[key];
+        let coord = UserLocationsGPS[key];
         newbutton.onclick = function() {
             onClickButton(coord.lat + "," + coord.lng);
             console.log(coord.lat + "," + coord.lng);
@@ -165,17 +139,16 @@ function createLocationButtons(jsonLocations, timeETA) {
         buttonContainer.appendChild(newbutton);
     }
 
+    // show the Add New Location Button 
     if (arrLocations.length<MAX_BUTTONS){
         var newbutton = document.createElement('button');
         newbutton.className = 'button';        
-        newbutton.innerHTML = 'Add New Location';
+        newbutton.innerHTML = '<b>Add New Location</b>';
         newbutton.onclick = function() {
             selectLocation();
         }
         buttonContainer.appendChild(newbutton);
     }
-
-    //SAVED_LOCATIONS = arrLocations;
 } //createLocationButtons
 
 function onLongPress(itemIndex){
@@ -184,35 +157,33 @@ function onLongPress(itemIndex){
 } // onLongPress
 
 function saveLocalStorageData() {
-    localStorage.setItem("eta.locations", JSON.stringify(SAVED_LOCATIONS));
+    localStorage.setItem("eta.locations", JSON.stringify(JSON_Locations));
     localStorage.setItem("eta.googlemapkey", UserAPIKey);
-    console.log("Save KEY " + UserAPIKey);
-}
-
-var dataRead;
+    //console.log("Save KEY " + UserAPIKey);
+} //saveLocalStorageData
 
 function readLocalStorageData() {
     UserAPIKey = localStorage.getItem("eta.googlemapkey");
     document.getElementById('key').value = UserAPIKey;
-    console.log('READ KEY ' + UserAPIKey);
-    UserDestinationsLabel = [];
-    UserDestinationsCoord = [];
+    //console.log('READ KEY ' + UserAPIKey);
+    UserLocationsName = [];
+    UserLocationsGPS = [];
     UserTimeETA = [];
 
-    SAVED_LOCATIONS = JSON.parse(localStorage.getItem("eta.locations"));
+    JSON_Locations = JSON.parse(localStorage.getItem("eta.locations"));
 
-    if (SAVED_LOCATIONS!=null){
-    var localData = SAVED_LOCATIONS;
-    for (const [key, value] of Object.entries(localData)) {
-        UserDestinationsLabel.push(key);
-        var coord={
-            lat:parseFloat(value.split(',')[0]),
-            lng:parseFloat(value.split(',')[1])
+    if (JSON_Locations!=null){
+        var localData = JSON_Locations;
+        for (const [key, value] of Object.entries(localData)) {
+            UserLocationsName.push(key);
+            var coord={
+                lat:parseFloat(value.split(',')[0]),
+                lng:parseFloat(value.split(',')[1])
+            }
+            UserLocationsGPS.push(coord);
+
+            console.log(key + "=" + value);
         }
-        UserDestinationsCoord.push(coord);
-
-        console.log(key + "=" + value);
-    }
     }
     else{
         console.log("NO SAVE LOCATIONS");
@@ -222,50 +193,59 @@ function readLocalStorageData() {
 
 function saveNewLocation(label, latlng) {
     if (label!=null && label.length>1){
-        if (SAVED_LOCATIONS === null){
-            SAVED_LOCATIONS={"A":"B"};
+        if (JSON_Locations === null){
+            JSON_Locations={"__":"__"}; //dummy
         }
-        else{
-            //SAVED_LOCATIONS[`${label}`] = latlng;
-            
-        }
-        SAVED_LOCATIONS[label] = latlng;
-        delete SAVED_LOCATIONS["A"];
+        
+        JSON_Locations[label] = latlng;
+        delete JSON_Locations["__"];
         console.log(label + "=" + latlng);
         saveLocalStorageData();
+        readLocalStorageData();
     }
     showButtons();
-}
+    createButtons(UserLocationsName);
+} // saveNewLocation
 
 function removeLocation(index){
-    delete SAVED_LOCATIONS[UserDestinationsLabel[index]];
+    delete JSON_Locations[UserLocationsName[index]];
     saveLocalStorageData();
     readLocalStorageData();
-    getTimeToDestinations(UserOrigin,UserDestinationsCoord);
-}
+    //getTimeToDestinations(UserOrigin,UserLocationsGPS);
+    createButtons(UserLocationsName);
+} // removeLocation
 
 function selectLocation(){
+    createMap();
     document.getElementById('divButtons').className = "divHide";
     document.getElementById('divLocation').className = "divShow";
-}
+} // selectLocation
 
 function showButtons(){
     document.getElementById('divButtons').className = "divShow";
     document.getElementById('divLocation').className = "divHide";
     readLocalStorageData();
-    getTimeToDestinations(UserOrigin,UserDestinationsCoord);
-}
-var apiResponse;
+    //getTimeToDestinations(UserOrigin,UserLocationsGPS);
+} // showButtons
 
-function getTimeToDestinations(userOrigin, userDestinations) {
-    UserTimeETA = [];
-    // initialize services
-    const service = new google.maps.DistanceMatrixService();
-    
+var responseDirectionService;
+var statusDirectionService;
+function getETA(indexLocation){
+    if (indexLocation >= UserLocationsName.length){
+        return;
+    }
+    let locationStart="1.3555263389611376,103.95976066589355";
+    let locationEnd=UserLocationsGPS[indexLocation].lat
+        +","
+        +UserLocationsGPS[indexLocation].lng;//"1.3318006794146071,103.87916564941406";
+
+    const directionsService = new google.maps.DirectionsService();
+
     // build request
     const request = {
-        origins: [userOrigin],
-        destinations: userDestinations,
+        origin: locationStart,
+        destination: locationEnd,
+        provideRouteAlternatives: true,
         drivingOptions: {
             departureTime: new Date()
             //trafficModel: 'best_guess'
@@ -276,35 +256,56 @@ function getTimeToDestinations(userOrigin, userDestinations) {
         avoidTolls: false
     };
 
-    if (UserAPIKey===null || UserAPIKey===undefined || UserAPIKey.length<10){
-        createLocationButtons(UserDestinationsLabel,UserTimeETA);
-        return;
+    directionsService.route((request),(response, status) => {
+        responseDirectionService = response;
+        statusDirectionService = status;
+        //console.log(response);
+        //console.log(status);
+        let infoETA = processDirections(response, status);
+        let idButton = 'idLocation' + indexLocation;
+        updateETAInfo(infoETA, idButton);
+
+        getETA(indexLocation+1);    // recursive call
+    });
+}
+
+function processDirections(response, status){
+    if (status!='OK') console.log("processDirections: ERROR IN STATUS");
+
+    let routes = response.routes;
+    let etaText = "";
+    for (var i=0; i<routes.length; i++){
+        let roadName = routes[i].summary;
+        let timeRef = routes[i].legs[0].duration.value;
+        let timeETA = routes[i].legs[0].duration_in_traffic.value;
+        let distance = routes[i].legs[0].distance.text;
+        let timeMinutes  = Math.ceil(timeETA/60) + 'm';
+        let textColor = "";
+        
+        // Set Color of Button Text
+        if (timeETA < timeRef){ // smooth
+            textColor = '<span class="trafficGood">';
+        }
+        else if (timeETA > timeRef*1.15){ // Jam
+            textColor = '<span class="trafficBad">';
+        }
+        else{ // Normal
+            textColor = '<span class="trafficNormal">';
+        }
+        etaText += '<div style="margin-left:50px">' + textColor 
+            + distance + " " + timeMinutes + " " + roadName 
+            + '</span></div>';
     }
 
-    service.getDistanceMatrix(request).then((response) => {
-        // put response
-        apiResponse = response; //JSON.stringify(response,null,2);
-        //console.log(Math.ceil(jsonResponse['rows'][0].elements[0].duration.value/60)+'m');
-        //console.log(Math.ceil(jsonResponse['rows'][0].elements[1].duration.value/60)+'m');
-        const rows = response['rows'][0].elements;
-        
-        for (var i = 0; i < rows.length; i++) {
-            console.log(rows[i].duration.value);
-            let timeETA = Math.ceil(rows[i].duration_in_traffic.value / 60);
-            UserTimeETA.push(timeETA);
-            let timeRef = Math.ceil(rows[i].duration.value / 60);
-            UserTimeREF.push(timeRef)
-            //Math.ceil(jsonResponse['rows'][0].elements[1].duration.value/60)+'m';
+    //console.log(etaText);
+    return etaText;
+} // processDirections
 
-            // append to the buttons
-        }
-        createLocationButtons(UserDestinationsLabel, UserTimeETA);
-    });
-} // getTimeToDestinations
-
-function pollTravelTime(id){
-    setTimeout(() => { }, 5000);
-}
+function updateETAInfo(textButton, idButton){
+    console.log("updateETAInfo" + idButton);
+    let button = document.getElementById(idButton);
+    button.innerHTML += textButton;
+} //updateETAInfo
 
 function gm_authFailure() {
  console.log("gm_authFailure");// Perform action(s) 
@@ -314,8 +315,8 @@ function gm_authFailure() {
 document.addEventListener('DOMContentLoaded', function() {
     if (document.querySelectorAll('#map').length > 0) {
         readLocalStorageData();
-        createLocationButtons(UserDestinationsLabel, []);
-
+        createButtons(UserLocationsName);
+        
         var apikey = "";
         if (UserAPIKey!=null && UserAPIKey.length>10){
             var apikey = 'key='+UserAPIKey;

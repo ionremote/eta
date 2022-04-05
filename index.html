@@ -6,13 +6,13 @@
         <link rel="manifest" href="/eta/manifest.webmanifest">
         <link rel="apple-touch-icon" sizes="192x192" href="/eta/icons/icon-192x192.png">
         <style type="text/css">
-          body {background-color:#999999;height:95vh;width:98vw;}
+          body {background-color:#333333;height:95vh;width:98vw;}
           #map{ width:95%; height:100%; }
-          h1 {font-size:26px;color: black;text-align:center;}
+          h1 {font-size:26px;color:white;text-align:center;}
           .divHide{display:none;}
           .divShow{display:block;margin:0 auto;}
           .button {width: 90vw;font-size:20px;color:black;text-align:left;border-radius:20px;background:##E0F0FF;padding:15px;border:none;margin:15px; display:block;}
-          .input{width:100vw:font-size:20px;text-align:left;}
+          .input{font-size:20px;padding:5px}
           .trafficGood{color:green;}
           .trafficNormal{color:orange;}
           .trafficBad{color:#F83636;}
@@ -21,6 +21,7 @@
     </head>
     <body>
         <h1>ETA</h1>
+        <img src="icons/icon-192x192.png" onclick="window.location.reload();" style="width:50px; height:50px;position:absolute;right:10px;top:10px;">
         <div class="divHide"> 
         <button onclick="onClickTest()">Test</button><br><br>
         <button onclick="saveLocalStorageData()">save</button><br><br>
@@ -28,17 +29,18 @@
         </div>
 
         <div style="width:80%">
-            <div id="divButtons" class="divShow"> </div>
+            <div id="divButtons" class="divShow">
+            </div>
         </div>
         <div id="divLocation" class="divHide" style="width:99vw;height:100vw">
             <!--map div-->
-            <input type="text" id="label" class="input" placeholder="Location Name">
+            <input type="text" id="label" class="input" style="width:70%" placeholder="Location Name">
             <button onclick="onClickSave()" style="color: white;font-size:20px; margin:15px;border-radius:0px;background:#42A5F6;padding:5px;border:none;">Save</button>
             <br>
             <div id="map"></div>
             <br>
             
-            <input type="text" id="key" class="input" placeholder="Google Maps API Key">
+            <input type="text" id="key" class="input" style="width:90%" placeholder="Google Maps API Key">
             <br><br>
             
         </div>
