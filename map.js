@@ -158,16 +158,23 @@ function onLongPress(itemIndex){
     removeLocation(itemIndex);
 } // onLongPress
 
+function saveAPIKey(){
+    UserAPIKey = document.getElementById("key").value;
+    localStorage.setItem("eta.googlemapkey", UserAPIKey);
+    alert("API Key Saved");
+}
+
 function saveLocalStorageData() {
     localStorage.setItem("eta.locations", JSON.stringify(JSON_Locations));
-    localStorage.setItem("eta.googlemapkey", UserAPIKey);
     localStorage.setItem("eta.fontSize", UserFontSize);
     //console.log("Save KEY " + UserAPIKey);
 } //saveLocalStorageData
 
 function readLocalStorageData() {
     UserAPIKey = localStorage.getItem("eta.googlemapkey");
-    document.getElementById('key').value = UserAPIKey;
+    if (UserAPIKey != null){
+        document.getElementById('key').value = UserAPIKey;
+    }
     //console.log('READ KEY ' + UserAPIKey);
     UserLocationsName = [];
     UserLocationsGPS = [];
