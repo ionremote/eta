@@ -9,6 +9,7 @@ var UserTimeETA;
 var UserTimeREF;
 var UserAPIKey;
 var UserOrigin;
+var UserFontSize = 20;
 var UserClickGPS;
 var JSON_Locations = "";
 const MAX_BUTTONS = 6;
@@ -101,7 +102,7 @@ function markerLocation() {
 function onClickButton(destination) {
     var url = 'https://www.google.com/maps/dir/?api=1&travelmode=driving&destination=' + destination;
     console.log(url);
-    window.open(url);
+    window.open(url,'_top');
 } //onClickButton
 
 function onClickSave() {
@@ -126,6 +127,7 @@ function createButtons(jsonLocations) {
         newbutton.innerHTML = '<b>' + value + '</b>';
         newbutton.id = "idLocation" + key;
         newbutton.setAttribute('data-long-press-delay', 1000);
+        newbutton.style.fontSize = parseInt(UserFontSize) + "px";
         //MUST USE LET for local scope
         let coord = UserLocationsGPS[key];
         newbutton.onclick = function() {
@@ -140,7 +142,7 @@ function createButtons(jsonLocations) {
     }
 
     // show the Add New Location Button 
-    if (arrLocations.length<MAX_BUTTONS){
+    /*if (arrLocations.length<MAX_BUTTONS){
         var newbutton = document.createElement('button');
         newbutton.className = 'button';        
         newbutton.innerHTML = '<b>Add New Location</b>';
@@ -148,7 +150,7 @@ function createButtons(jsonLocations) {
             selectLocation();
         }
         buttonContainer.appendChild(newbutton);
-    }
+    }*/
 } //createLocationButtons
 
 function onLongPress(itemIndex){
@@ -159,6 +161,7 @@ function onLongPress(itemIndex){
 function saveLocalStorageData() {
     localStorage.setItem("eta.locations", JSON.stringify(JSON_Locations));
     localStorage.setItem("eta.googlemapkey", UserAPIKey);
+    localStorage.setItem("eta.fontSize", UserFontSize);
     //console.log("Save KEY " + UserAPIKey);
 } //saveLocalStorageData
 
@@ -169,6 +172,11 @@ function readLocalStorageData() {
     UserLocationsName = [];
     UserLocationsGPS = [];
     UserTimeETA = [];
+
+    UserFontSize = localStorage.getItem("eta.fontSize");
+    if (UserFontSize === null){
+        UserFontSize = 18;
+    }
 
     JSON_Locations = JSON.parse(localStorage.getItem("eta.locations"));
 
@@ -202,9 +210,10 @@ function saveNewLocation(label, latlng) {
         console.log(label + "=" + latlng);
         saveLocalStorageData();
         readLocalStorageData();
+        createButtons(UserLocationsName);
+        getETA(0);
     }
     showButtons();
-    createButtons(UserLocationsName);
 } // saveNewLocation
 
 function removeLocation(index){
@@ -213,22 +222,30 @@ function removeLocation(index){
         saveLocalStorageData();
         readLocalStorageData();
         createButtons(UserLocationsName);
+        getETA(0);
     }
 } // removeLocation
 
 function selectLocation(){
     createMap();
-    document.getElementById('divButtons').className = "divHide";
     document.getElementById('divLocation').className = "divShow";
+    document.getElementById('divButtons').className = "divHide";
+    document.getElementById('divHelp').className = "divHide";
 } // selectLocation
 
 function showButtons(){
     document.getElementById('divButtons').className = "divShow";
     document.getElementById('divLocation').className = "divHide";
+    document.getElementById('divHelp').className = "divHide";
     readLocalStorageData();
     //getTimeToDestinations(UserOrigin,UserLocationsGPS);
 } // showButtons
 
+function showHelp(){
+    document.getElementById('divHelp').className = "divShow";
+    document.getElementById('divButtons').className = "divHide";
+    document.getElementById('divLocation').className = "divHide";
+}
 var responseDirectionService;
 var statusDirectionService;
 function getETA(indexLocation){
@@ -293,8 +310,8 @@ function processDirections(response, status){
         else{ // Normal
             textColor = '<span class="trafficNormal">';
         }
-        etaText += '<div style="margin-left:30px">' + textColor 
-            + distance + "&nbsp;&nbsp;&nbsp;<b>" + timeMinutes + "</b>&nbsp;&nbsp;&nbsp;" + roadName
+        etaText += '<div style="margin-left:20px;">' + textColor 
+            + distance + "&nbsp;&nbsp;<b>" + timeMinutes + "</b>&nbsp;&nbsp;" + roadName
             + '</span></div>';
     }
 
@@ -302,8 +319,17 @@ function processDirections(response, status){
     return etaText;
 } // processDirections
 
+function fontChange(changeSize){
+    console.log("fontChange " + changeSize);
+    UserFontSize = parseInt(UserFontSize) + parseInt(changeSize);
+    for (let i = 0; i < Object.keys(UserLocationsName).length; i++) {
+        document.getElementById('idLocation'+i).style.fontSize = UserFontSize + "px";
+    }
+    saveLocalStorageData();
+} // fontIncrease
+
 function updateETAInfo(textButton, idButton){
-    console.log("updateETAInfo" + idButton);
+    console.log("updateETAInfo " + idButton);
     let button = document.getElementById(idButton);
     button.innerHTML += textButton;
 } //updateETAInfo
