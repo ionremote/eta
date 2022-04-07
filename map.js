@@ -255,21 +255,21 @@ function showHelp(){
 }
 var responseDirectionService;
 var statusDirectionService;
+
+function getLatLngString(jsonLocation){
+    return(jsonLocation.lat + "," + jsonLocation.lng);
+}
 function getETA(indexLocation){
     if (indexLocation >= UserLocationsName.length){
         return;
     }
-    let locationStart="1.3555263389611376,103.95976066589355";
-    let locationEnd=UserLocationsGPS[indexLocation].lat
-        +","
-        +UserLocationsGPS[indexLocation].lng;//"1.3318006794146071,103.87916564941406";
-
+    
     const directionsService = new google.maps.DirectionsService();
 
     // build request
     const request = {
-        origin: locationStart,
-        destination: locationEnd,
+        origin: getLatLngString(UserOrigin),
+        destination: getLatLngString(UserLocationsGPS[indexLocation]),
         provideRouteAlternatives: true,
         drivingOptions: {
             departureTime: new Date()
