@@ -300,7 +300,7 @@ function processDirections(response, status){
     let routes = response.routes;
     let etaText = "";
     for (var i=0; i<routes.length; i++){
-        let roadName = routes[i].summary.replace(/and/g,"&#10132;");
+        let roadName = routes[i].summary.replace(/ and /g,"&#10132;");
         let timeRef = routes[i].legs[0].duration.value;
         let timeETA = routes[i].legs[0].duration_in_traffic.value;
         let distance = routes[i].legs[0].distance.text;
